@@ -10,7 +10,7 @@ struct  snake *next;
 struct snake *head=NULL;
 struct snake *create(int a,int b)
 {
-    struct snake *ptr=(struct snake*)malloc(sizeof(struct snake));
+    struct snake *ptr=(struct snake*)malloc(1000*sizeof(struct snake));
     ptr->x=a;
     ptr->y=b;
     ptr->next=NULL;
@@ -69,7 +69,7 @@ void pboard()
 {
     int i,j;
     printf("Welcome To The Snake Game\nPress 'a' to move left\nPress 'd' to move right\nPress 's' to move down\nPress 'w' to move up\n");
-    printf("Eat F to increase length\nCaution length decreases if you eat P\nd");
+    printf("Eat F to increase length\nCaution length decreases if you eat P\n");
     for(i=0;i<20;i++)
     {
         for(j=0;j<60;j++)
