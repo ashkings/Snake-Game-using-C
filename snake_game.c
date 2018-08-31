@@ -10,7 +10,7 @@ struct  snake *next;
 struct snake *head=NULL;
 struct snake *create(int a,int b)
 {
-    struct snake *ptr=(struct snake*)malloc(sizeof(struct snake));
+    struct snake *ptr=(struct snake*)malloc(10000*sizeof(struct snake));
     ptr->x=a;
     ptr->y=b;
     ptr->next=NULL;
@@ -36,7 +36,7 @@ void create_poison()
 }
 void ins(int x,int y)
 {
-    struct snake *t,*temp;
+    struct snake *temp;
     temp=create(x,y);
     if(head==NULL)
     {
@@ -58,18 +58,19 @@ void prin_snak()
  t=head;
  mat[head->x][head->y]='H';
  t=t->next;
- while(t->next!=NULL)
- {
-     mat[t->x][t->y]='*';
-     t=t->next;
- }
- mat[t->x][t->y]='T';
+      while(t->next!=NULL)
+     {
+         mat[t->x][t->y]='*';
+         t=t->next;
+     }
+     mat[t->x][t->y]='T';
+     t=head;
 }
 void pboard()
 {
     int i,j;
     printf("Welcome To The Snake Game\nPress 'a' to move left\nPress 'd' to move right\nPress 's' to move down\nPress 'w' to move up\n");
-    printf("Eat F to increase length\nCaution length decreases if you eat P\nd");
+    printf("Eat F to increase length\nCaution length decreases if you eat P\n");
     for(i=0;i<20;i++)
     {
         for(j=0;j<60;j++)
@@ -83,37 +84,30 @@ void shift()
 {
     struct snake *t,*temp;
     t=head;
-    while(t->next!=NULL)
-    {
-        temp=t;
-        t=t->next;
-    }
+        while(t->next!=NULL)
+        {
+            temp=t;
+            t=t->next;
+        }
     temp->next=NULL;
     mat[t->x][t->y]=' ';
 }
 int check(int a,int b)
 {
-    if(mat[a][b]=='*')
+    if(mat[a][b]=='*'||mat[a][b]=='T')
         return 1;
 }
 void option(int x,int y)
 {
     int c;
-    static a;
-    static b;
+    static int a;
+    static int b;
     a=x;
     b=y;
-    shift();
-    b=b-1;
-    if(b==0)
-    {
-     b=58;
-    }
-    ins(a,b);
     char ch;
         while(1)
         {
-            ch=getch();
+             ch=getch();
             switch(ch)
             {
             case 'a':
@@ -205,16 +199,16 @@ int main()
                 }
             }
         }
-        int a=(rand()%(5-1))+1,b=(rand()%(50-1))+1;
-        for(i=0;i<5;i++)
+        int a=10,b=20;
+        for(i=0;i<4;i++)
         {
          cr_sn(a,b);
-         a=a,b=b+1;
+         b=b+1;
         }
         create_food();
         create_poison();
         prin_snak();
         pboard();
-        option(a,b);
+        option(a,b-1);
         return 0;
 }
