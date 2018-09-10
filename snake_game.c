@@ -1,10 +1,14 @@
 #include<stdio.h>
 #include <conio.h>
 #include<stdlib.h>
+#include<string.h>
 char mat[20][60];
+FILE *fp ;
+int score=0;
 struct snake
 {
     int x,y;
+    char val;
 struct  snake *next;
 };
 struct snake *head=NULL;
@@ -16,23 +20,28 @@ struct snake *create(int a,int b)
     ptr->next=NULL;
     return(ptr);
 }
-void create_food()
+int create_food(int x,int y)
 {
-    int x=(rand()%(20-1))+(1),y=(rand()%(60-1))+(1);
-    if(x>0&&x<20||y>0&&y<80)
+    char *f=malloc(10*sizeof(char));
+    if(x==0&&y==0)
+     x=(rand()%(20-1))+(1),y=(rand()%(60-1))+(1);
+      if(mat[x][y]=='*'||mat[x][y]=='#'||mat[x][y]=='P') create_food(0,0);
+      else
     {
-      if(mat[x][y]=='*'||mat[x][y]=='#'||mat[x][y]=='P') create_food();
-      else mat[x][y]='F';
+     mat[x][y]='F';
+     return(x*100+y);
     }
 }
-void create_poison()
+int create_poison(int x,int y)
 {
-    int x=(rand()%(20-1))+(1),y=(rand()%(60-1))+(1);
-    if(x>0&&x<20||y>0&&y<80)
-    {
-      if(mat[x][y]=='*'||mat[x][y]=='#'||mat[x][y]=='F') create_poison();
-      else mat[x][y]='P';
-    }
+    if(x==0&&y==0)
+      x=(rand()%(20-1))+(1),y=(rand()%(60-1))+(1);
+      if(mat[x][y]=='*'||mat[x][y]=='#'||mat[x][y]=='F') create_poison(0,0);
+      else
+      {
+          mat[x][y]='P';
+          return(x*100+y);
+      }
 }
 void ins(int x,int y)
 {
@@ -66,11 +75,44 @@ void prin_snak()
      mat[t->x][t->y]='T';
      t=head;
 }
-void pboard()
+int for_sum(char c)
+{
+    int r,sum=0;
+    while(c!=',')
+     {
+      r=c-48;
+      sum=sum*10+r;
+      c=getc(fp);
+      }
+      return sum;
+}
+char to_skip(char c)
+{
+    while(c!='\n')
+     {
+      c=getc(fp);
+     }
+     c=getc(fp);
+     return c;
+}
+int get_high_score()
+{
+    int high;
+   fp=fopen("score.txt","r");
+   char ch=getc(fp);
+   if(ch==EOF) high=0;
+   else
+   {
+    high=for_sum(ch);
+   }
+   return high;
+}
+int pboard()
 {
     int i,j;
-    printf("Welcome To The Snake Game\nPress 'a' to move left\nPress 'd' to move right\nPress 's' to move down\nPress 'w' to move up\n");
-    printf("Eat F to increase length\nCaution length decreases if you eat P\n");
+    int High=get_high_score();
+    system("cls");
+    printf("High Score %d\t\t\tYour Score %d\n",High,score);
     for(i=0;i<20;i++)
     {
         for(j=0;j<60;j++)
@@ -79,6 +121,7 @@ void pboard()
         }
         printf("\n");
     }
+    return High;
 }
 void shift()
 {
@@ -92,16 +135,79 @@ void shift()
     temp->next=NULL;
     mat[t->x][t->y]=' ';
 }
+void create_score()
+{
+    score=score+3;
+}
+void del_score()
+{
+    score=score/2;
+}
 int check(int a,int b)
 {
     if(mat[a][b]=='*'||mat[a][b]=='T')
         return 1;
 }
-void option(int x,int y)
+void save_game(struct snake *t,int f,int p)
 {
-    int c;
+    if(t==NULL)
+    {
+        fp=fopen("save.txt","a++");
+        fprintf(fp,"%d,%c\n",f,mat[f/100][f%100]);
+        fprintf(fp,"%d,%c\n",p,mat[p/100][p%100]);
+        return;
+    }
+    else
+    {
+        struct snake *temp=t;
+        save_game(t->next,f,p);
+        fp=fopen("save.txt","a++");
+        fprintf(fp,"%d,%d,%c\n",temp->x,temp->y,mat[temp->x][temp->y]);
+        fclose(fp);
+    }
+}
+int for_food(int a,int b,int f)
+{
+    if(mat[a][b]=='F')
+     {
+      create_score();
+      ins(a,b);
+      f=create_food(0,0);
+     }
+     return f;
+}
+int for_poison(int a,int b,int p)
+{
+    if(mat[a][b]=='P')
+    {
+      del_score();
+      shift();
+      p=create_poison(0,0);
+    }
+    return p;
+}
+void scre(int h)
+{
+    char s[]="High Score";
+    if(score>h)
+     {
+         fp=fopen("score.txt","w");
+      fprintf(fp,"%d,%s\n",score,s);
+      printf("Congratulations You Have Made High Score");
+      fclose(fp);
+     }
+    else
+     {
+      printf("Your Score %d",score);
+     }
+}
+void option(int x,int y,int f,int p)
+{
+    int c,flag=0;
     static int a;
     static int b;
+    prin_snak();
+    int h=pboard();
     a=x;
     b=y;
     char ch;
@@ -118,8 +224,6 @@ void option(int x,int y)
                     {
                       b=58;
                     }
-                    ins(a,b);
-                    c=check(a,b);
                     break;
                 }
             case 'd':
@@ -130,8 +234,6 @@ void option(int x,int y)
                     {
                         b=1;
                     }
-                    ins(a,b);
-                    c=check(a,b);
                     break;
                 }
             case 's':
@@ -142,8 +244,6 @@ void option(int x,int y)
                     {
                         a=1;
                     }
-                    ins(a,b);
-                    c=check(a,b);
                     break;
                 }
             case 'w':
@@ -154,23 +254,26 @@ void option(int x,int y)
                     {
                         a=18;
                     }
-                    ins(a,b);
-                    c=check(a,b);
+                    break;
+                }
+            case 'q':
+                {
+                    fp=fopen("save.txt","w");
+                    fclose(fp);
+                    save_game(head,f,p);
                     break;
                 }
             }
-            if(mat[a][b]=='F')
+            if(ch=='a'||ch=='w'||ch=='s'||ch=='d')
             {
-                ins(a,b);
-                create_food();
-            }
-            else if(mat[a][b]=='P')
-            {
-                shift();
-                create_poison();
+             c=check(a,b);
+             ins(a,b);
+             f=for_food(a,b,f);
+             p=for_poison(a,b,p);
             }
             if(c==1)
             {
+                scre(h);
                 printf("\n\n*************GAME OVER*************");
                 break;
             }
@@ -182,33 +285,91 @@ void option(int x,int y)
             }
         }
 }
+void for_save_game()
+{
+    int p,f,a,b;
+      char c;
+      fp=fopen("save.txt","r");
+      c=getc(fp);
+      if(c==EOF) printf("NO SAVED GAME");
+      else
+        {
+         while(c!='H')
+          {
+            a=for_sum(c);
+            c=getc(fp);
+             b=for_sum(c);
+             ins(a,b);
+             c=getc(fp);
+             if(c=='T'||c=='*')
+              {
+                  c=to_skip(c);
+              }
+            }
+            c=getc(fp);
+            c=getc(fp);
+            while(c!='P')
+             {
+                f=for_sum(c);
+                c=getc(fp);
+                if(c=='F')
+                {
+                    c=to_skip(c);
+                }
+                p=for_sum(c);
+                 c=getc(fp);
+            }
+            f=create_food(f/100,f%100);
+            p=create_poison(p/100,p%100);
+            option(a,b,f,p);
+        }
+}
+void for_new_game()
+{
+    int a,b,f,p,i;
+    a=10,b=20;
+    for(i=0;i<4;i++)
+     {
+      cr_sn(a,b);
+      b=b+1;
+      }
+    f=create_food(0,0);
+    p=create_poison(0,0);
+    option(a,b-1,f,p);
+}
+void create_matrix()
+{
+    int i,j;
+    for(i=0;i<20;i++)
+     {
+      for(j=0;j<60;j++)
+       {
+        if(i==0||j==0||j==59||i==19)
+         {
+          mat[i][j]='#';
+         }
+        else
+         {
+          mat[i][j]=' ';
+         }
+       }
+      }
+}
 int main()
 {
-    int i=0,j=0;
-        for(i=0;i<20;i++)
+    int choice;
+    create_matrix();
+        printf("\t\t\tWelcome To The Snake Game\n\n\tInformation About The Game\n\n\n\tPress 1 to start a new game\n\tPress 2 to start previously saved game\n");
+        printf("\tPress 'a' to move left\n\tPress 'd' to move right\n\tPress 's' to move down\n\tPress 'w' to move up\n");
+        printf("\tEat F to increase length\n\tCaution length decreases if you eat P\n");
+        scanf("%d",&choice);
+        if(choice==1)
         {
-            for(j=0;j<60;j++)
-            {
-                if(i==0||j==0||j==59||i==19)
-                {
-                    mat[i][j]='#';
-                }
-                else
-                {
-                    mat[i][j]=' ';
-                }
-            }
+          for_new_game();
         }
-        int a=10,b=20;
-        for(i=0;i<4;i++)
+        else if(choice==2)
         {
-         cr_sn(a,b);
-         b=b+1;
+            for_save_game();
         }
-        create_food();
-        create_poison();
-        prin_snak();
-        pboard();
-        option(a,b-1);
         return 0;
 }
